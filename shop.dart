@@ -91,6 +91,11 @@ dynamic seeProducts(List productsName, List userCart) {
               productsName, userChoiseBuy, productAmount, userCart);
           break;
           // checking if the user wants product even though there is no desired amount left
+        } else if (productsName[int.parse(userChoiseBuy) - 1][2] == 0) {
+          print(
+              'Sorry we are out of ${productsName[int.parse(userChoiseBuy) - 1][0]}!');
+          pressEnter();
+          break;
         } else {
           clearConsole();
           print(
@@ -207,23 +212,20 @@ void seeCart(List userCart) {
     for (var promos in promocodesForPurchase) {
       if (promos[0] == userInput_promocode!.toUpperCase()) {
         isPromocodeFound = true;
-        // getting current date
-        var currentDate = (DateTime.now().toString()).split(' ');
 
-        List<String> dateParts = currentDate[0].split('-');
-        List validTime = promos[1];
+        var currentDate = DateTime.now();
+        var validTime = DateTime(promos[1][0], promos[1][1], promos[1][2]);
 
-        // checking whether promoce is valid
-        if ((int.parse(dateParts[0]) <= validTime[0])) {
-          if (int.parse(dateParts[1]) < validTime[1]) {
-            discountAmount = promos[2];
-            isPromocodeValid = true;
-          } else if (int.parse(dateParts[2]) <= validTime[2]) {
-            isPromocodeValid = true;
-            discountAmount = promos[2];
-          } else {
-            print('Promocode you entered has been expired!');
-          }
+        if (currentDate.isBefore(validTime) ||
+            currentDate.isAtSameMomentAs(validTime)) {
+          discountAmount = promos[2];
+          isPromocodeValid = true;
+        } else {
+          print('Current Date: $currentDate');
+          print('Valid Date: $validTime');
+          print('Promo you have entered have been expired!');
+          pressEnter();
+          clearConsole();
         }
       }
     }
@@ -276,6 +278,8 @@ void seeCart(List userCart) {
   print('$userCartSum was successfully withdrawn from the card 🎉\n'
       'Thank you for visiting us today! Come back anytime. Have a fantastic day!!!');
   pressEnter();
+
+  userCart.clear();
 }
 
 // case 3
@@ -333,20 +337,39 @@ void pressEnter() {
 
 List reduceAddProduct_informUser(List productsName, String userChoiceBuy,
     String productAmount, List userCart) {
+  bool doProductContainsInCart = false;
+
+  // checking if the user choice to buy contains in cart
+  for (var each in userCart) {
+    if (each.contains(productsName[int.parse(userChoiceBuy) - 1][0])) {
+      doProductContainsInCart = true;
+    }
+  }
+
+  // user choice to buy contains in cart, add to the previous variable
+  if (doProductContainsInCart) {
+    for (var each in userCart) {
+      for (var i in each) {
+        if (i == productsName[int.parse(userChoiceBuy) - 1][0]) {
+          each[1] += int.parse(productAmount);
+        }
+      }
+    }
+  } else {
+    // informing user that adding product to cart was successful
+    clearConsole();
+    print(
+        '${productsName[int.parse(userChoiceBuy) - 1][0]} successfully has been added to your cart🛒!');
+
+    // adding product to user cart
+    userCart.add([
+      productsName[int.parse(userChoiceBuy) - 1][0],
+      int.parse(productAmount),
+      productsName[int.parse(userChoiceBuy) - 1][1]
+    ]);
+    pressEnter();
+  }
   // reduce the product amount by the amount taken by the user
   productsName[int.parse(userChoiceBuy) - 1][2] -= int.parse(productAmount);
-
-  // informing user that adding product to cart was successful
-  clearConsole();
-  print(
-      '${productsName[int.parse(userChoiceBuy) - 1][0]} successfully has been added to your cart🛒!');
-
-  // adding product to user cart
-  userCart.add([
-    productsName[int.parse(userChoiceBuy) - 1][0],
-    int.parse(productAmount),
-    productsName[int.parse(userChoiceBuy) - 1][1]
-  ]);
-  pressEnter();
   return userCart;
 }
